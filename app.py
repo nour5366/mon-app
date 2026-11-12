@@ -36,6 +36,11 @@ def accueil():
     return f"Bonjour ! Cette page a été visitée {total} fois."
 
 
+@app.route("/health")
+def health():
+    return {"status": "OK"}
+
+
 if __name__ == "__main__":
     init_db()
     app.run(
