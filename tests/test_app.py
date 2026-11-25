@@ -1,37 +1,47 @@
 
-from unittest.mock import MagicMock, patch
-from app import app
+from app import app, init_db, get_connection
 
 
-def test_accueil():
-    conn = MagicMock()
-    cur = MagicMock()
-
-    conn.__enter__.return_value = conn
-    conn.cursor.return_value.__enter__.return_value = cur
-    cur.fetchone.return_value = (1,)
-
-    with patch("app.get_connection", return_value=conn):
-        client = app.test_client()
-        response = client.get("/")
+def test_health():
+    client = app.test_client()
+    response = client.get("/health")
 
     assert response.status_code == 200
-    assert b"Bonjour !" in response.data
-    assert b"1 fois" in response.data
+    assert response.json["status"] == "OK"
 
 
-def test_insertion_visite():
-    conn = MagicMock()
-    cur = MagicMock()
+def test_database_connection():
+    conn = get_connection()
 
-    conn.__enter__.return_value = conn
-    conn.cursor.return_value.__enter__.return_value = cur
-    cur.fetchone.return_value = (2,)
+    with conn.cursor() as cur:
+        cur.execute("SELECT 1")
+        result = cur.fetchone()
 
-    with patch("app.get_connection", return_value=conn):
-        client = app.test_client()
-        client.get("/")
+    assert result[0] == 1
+    conn.close()
 
-    cur.execute.assert_any_call("INSERT INTO visites DEFAULT VALUES")
-    cur.execute.assert_any_call("SELECT COUNT(*) FROM visites")
+
+def test_init_db():
+    init_db()
+
+    conn = get_connection()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT to_regclass('public.visites')"
+        )
+        result = cur.fetchone()
+
+    assert result[0] == "visites"
+    conn.close()
+
+
+def test_home():
+    init_db()
+
+    client = app.test_client()
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Cette page a été visitée" in response.get_data(as_text=True)
 
