@@ -1,4 +1,6 @@
 git add .
+git commit -m "Nouvelle version de l'application"
+git push origin maingit add .
 git commit -m "Modification de l'application"
 git push origin mainimport os
 import psycopg2

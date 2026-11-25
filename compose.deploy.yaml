@@ -1,0 +1,7 @@
+services:
+  web:
+    image: ghcr.io/nour5366/mon-app:latest
+    container_name: application-web
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
